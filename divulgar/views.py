@@ -5,6 +5,8 @@ from django.contrib.messages import constants
 from adotar.models import PedidoAdocao
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 
 @login_required
 def novo_pet(request):
@@ -74,5 +76,24 @@ def ver_pedido_adocao(request):
     if request.method == "GET":
         pedidos = PedidoAdocao.objects.filter(usuario=request.user).filter(status="AG")
         return render(request, 'ver_pedido_adocao.html', {'pedidos': pedidos})
+
+def dashboard(request):
+    if request.method == "GET":
+        return render(request, 'dashboard.html')
+
+@csrf_exempt
+def api_adocoes_por_raca(request):
+    racas = Raca.objects.all()
+
+    qtd_adocoes = []
+    for raca in racas:
+        adocoes = PedidoAdocao.objects.filter(pet__raca=raca).count()
+        qtd_adocoes.append(adocoes)
+
+    racas = [raca.raca for raca in racas]
+    data = {'qtd_adocoes': qtd_adocoes,
+            'labels': racas}
+
+    return JsonResponse(data)
 
 
